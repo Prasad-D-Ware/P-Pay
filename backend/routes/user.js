@@ -18,7 +18,7 @@ router.post("/signup", async (req, res) => {
   const { success } = signupInput.safeParse(req.body);
   if (!success) {
     return res.status(411).json({
-      msg: "Email already taken / Incorrect inputs",
+      msg: "Incorrect inputs",
     });
   }
 
@@ -26,7 +26,7 @@ router.post("/signup", async (req, res) => {
 
   if (existingUser) {
     return res.status(411).json({
-      msg: "Email already taken / Incorrect inputs",
+      msg: "Email already taken ",
     });
   }
 
@@ -81,6 +81,54 @@ router.post("/signin", authMiddleware, async (req, res) => {
 
   res.json({
     msg: "Error while loggin in",
+  });
+});
+
+const updateSchema = z.object({
+  password: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
+
+router.put("/", authMiddleware, async (req, res) => {
+  const { success } = updateSchema.safeParse(req.body);
+
+  if (!success) {
+    res.status(411).json({
+      msg: "Error while updating information",
+    });
+  }
+
+  await User.updateOne({ _id: req.userId }, req.body);
+  res.json({
+    msg: "Updated Successfully",
+  });
+});
+
+router.get("/bulk", authMiddleware, async (req, res) => {
+  const filter = req.params.filter || "";
+  const users = await User.find({
+    $or: [
+      {
+        firstName: {
+          $regex: filter,
+        },
+      },
+      {
+        lastName: {
+          $regex: filter,
+        },
+      },
+    ],
+  });
+
+  res.json({
+    user: users.map((user) => ({
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      _id: user._id,
+    })),
   });
 });
 
