@@ -3,6 +3,7 @@ const z = require("zod");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("./config");
 const { User } = require("../db");
+const { authMiddleware } = require("../middleware");
 
 const router = express.Router();
 
@@ -56,7 +57,7 @@ const signinInput = z.object({
   password: z.string(),
 });
 
-router.post("/signin", async (req, res) => {
+router.post("/signin", authMiddleware, async (req, res) => {
   const { success } = signinInput.safeParse(req.body);
   if (!success) {
     return res.status(411).json({
