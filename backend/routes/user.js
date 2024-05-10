@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("./config");
 const { User, Account } = require("../db");
 const { authMiddleware } = require("../middleware");
+const bcrypt = require("bcrypt");
 
 const router = express.Router();
 
@@ -30,9 +31,12 @@ router.post("/signup", async (req, res) => {
     });
   }
 
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+
   const user = await User.create({
     username: req.body.username,
-    password: req.body.password,
+    password: hashedPassword,
     firstName: req.body.firstName,
     lastName: req.body.lastName,
   });
@@ -72,10 +76,16 @@ router.post("/signin", authMiddleware, async (req, res) => {
 
   const user = await User.findOne({
     username: req.body.username,
-    password: req.body.password,
   });
 
-  if (user) {
+  const isMatch = await bcrypt.compare(req.body.password, user.password);
+
+  // const user = await User.findOne({
+  //   username: req.body.username,
+  //   password: req.body.password,
+  // });
+
+  if (isMatch) {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET);
 
     res.json({
@@ -83,6 +93,9 @@ router.post("/signin", authMiddleware, async (req, res) => {
     });
     return;
   }
+  // if (user) {
+
+  // }
 
   res.json({
     msg: "Error while loggin in",
@@ -128,7 +141,7 @@ router.get("/bulk", authMiddleware, async (req, res) => {
   });
 
   res.json({
-    user: users.map((user) => ({
+    users: users.map((user) => ({
       username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
