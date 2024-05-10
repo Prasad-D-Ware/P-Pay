@@ -1,11 +1,7 @@
+import "./App.css";
 
 function App() {
-
-  return (
-    <div>
-        Hello world
-    </div>
-  )
+  return <div className="text-4xl">Hello !</div>;
 }
 
-export default App
+export default App;
